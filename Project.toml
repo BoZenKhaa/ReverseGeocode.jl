@@ -3,5 +3,13 @@ uuid = "96b87e3f-b46e-456c-8178-0e438baab6fa"
 authors = ["Jan Mrkos <mrkosjan@gmail.com>"]
 version = "0.1.0"
 
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
+ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
+
 [compat]
+CSV = "0.8"
+NearestNeighbors = "0.4"
+ZipFile = "0.9"
 julia = "1.2"

@@ -4,3 +4,29 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://BoZenKhaa.github.io/ReverseGeocode.jl/dev)
 [![Build Status](https://github.com/BoZenKhaa/ReverseGeocode.jl/workflows/CI/badge.svg)](https://github.com/BoZenKhaa/ReverseGeocode.jl/actions)
 [![Coverage](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl)
+
+
+ReverseGeocode is a tool for quick offline reverse geocoding of coordinates. It is a rewrite  of the python [reverse_geocode](https://github.com/richardpenman/reverse_geocode) module to Julia. 
+
+The tool returns city and country closest to a latitude/longitude coordinate (WGS84).
+
+Usage example:
+```julia
+using ReverseGeocode, StaticArrays 
+
+gc = Geocoder()
+
+# single coordinate
+decode(gc, SA[51.45,0.00])
+#("United Kingdom", "Blackheath"))
+
+# multiple coordinates
+decode(gc, [[34.2,100.00] [50.01,16.35]])
+#2-element Array{Tuple{String,String},1}:
+# ("China", "Kequ")
+# ("Czechia", "Ústí nad Orlicí"))
+```
+
+The package works by searching for the nearest neighbor in the list of known locations from [geonames.org](http://download.geonames.org/export/dump). As such, it may not return accurate annotations for some points (e.g. points close to country borders may be mislabelled). 
+
+This package is useful for quickly annotating large numbers of points that would otherwise exhaust free web APIs.
