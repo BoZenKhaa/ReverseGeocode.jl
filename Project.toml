@@ -1,0 +1,7 @@
+name = "ReverseGeocode"
+uuid = "96b87e3f-b46e-456c-8178-0e438baab6fa"
+authors = ["Jan Mrkos <mrkosjan@gmail.com>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.2"
