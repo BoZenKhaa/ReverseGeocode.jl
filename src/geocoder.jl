@@ -85,7 +85,7 @@ function download_country_codes(;data_dir::String=DATA_DIR)
 end
 
 """
-    decode(gc::Geocoder, points)=> Array{Tuple{String, String}}
+    decode(gc::Geocoder, points) => Array{NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}}
 
 Return country name and city for collection of points. Points should be either an array of staticaly sized arrays 
 (e.g. StaticArrays) or a Matrix (see NearestNeighbors.jl documentation for details). 
@@ -100,21 +100,21 @@ Nearest neighbor search uses the euclidian metric in the space of lat/lon coordi
 julia> gc = Geocoder();
 julia> ReverseGeocode.decode(gc, [SA[49.5863897, 17.2627342], SA[63.3342550, 12.0280064]])
 2-element Array{Tuple{String,String},1}:
- ("Czechia", "CZ", "Olomouc")
- ("Norway", "NO", "Meråker")
+ (country="Czechia", country_code="CZ", city="Olomouc")
+ (country="Norway", country_code="NO", city="Meråker")
 ```
 """
-function decode(gc::Geocoder, points::Union{AbstractArray{<:AbstractArray{<:Real, 1}}, AbstractArray{<:Real,2}})=>
+function decode(gc::Geocoder, points::Union{AbstractArray{<:AbstractArray{<:Real, 1}}, AbstractArray{<:Real,2}})::Array{NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}}
     idxs, dist = nn(gc.tree, points)
-    info = [gc.info[idx] for idx in idxs]
-    tags = [(gc.country_codes[i.country_code], i.country_code, i.city) for i in info]
+    infos = [gc.info[idx] for idx in idxs]
+    tags = [(country=gc.country_codes[i.country_code], country_code=i.country_code, city=i.city) for i in infos]
 end
 
 
 """
-    decode(gc::Geocoder, point) => Tuple(String, String)
+    decode(gc::Geocoder, point) => NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}
 
-Decode for single points. If processing many points, it should be faster with `decode(gc, points)` than with this function. 
+Decode for single point. If processing many points, it should be faster with `decode(gc, points)` than with this function. 
 """
 function decode(gc::Geocoder, point::AbstractArray{<:Real, 1})
     decode(gc, [point,])[1]

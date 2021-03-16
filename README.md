@@ -18,13 +18,13 @@ gc = Geocoder()
 
 # single coordinate
 decode(gc, SA[51.45,0.00])
-#("United Kingdom", "UK", "Blackheath"))
+#(country = "United Kingdom", country_code = "GB", city = "Blackheath")
 
 # multiple coordinates
 decode(gc, [[34.2,100.00] [50.01,16.35]])
-#2-element Array{Tuple{String,String},1}:
-# ("China", "CN", "Kequ")
-# ("Czechia","CZ", "Ústí nad Orlicí"))
+#2-element Array{NamedTuple{(:country, :country_code, :city),Tuple{String,String,String}},1}:
+# (country = "China", country_code = "CN", city = "Kequ")
+# (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí")
 ```
 
 The package works by searching for the nearest neighbor in the list of known locations from [geonames.org](http://download.geonames.org/export/dump). As such, it may not return accurate annotations for some points (e.g. points close to country borders may be mislabelled). 
