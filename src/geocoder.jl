@@ -3,6 +3,7 @@ const GEO_SOURCE = "http://download.geonames.org/export/dump"
 const DATA_DIR = "./data"
 
 """
+'''
 Column names in the geonames dumpfile (from http://download.geonames.org/export/dump):
 ---------------------------------------------------
 geonameid         : integer id of record in geonames database
@@ -24,6 +25,7 @@ elevation         : in meters, integer
 dem               : digital elevation model, srtm3 or gtopo30, average elevation of 3''x3'' (ca 90mx90m) or 30''x30'' (ca 900mx900m) area in meters, integer. srtm processed by cgiar/ciat.
 timezone          : the iana timezone id (see file timeZone.txt) varchar(40)
 modification date : date of last modification in yyyy-MM-dd format]
+'''
 """
 const COLUMNS = [:geonameid, :name, :asciiname, :alternatenames, :latitude, :longitude, 
                 :feature_class, :feature_code, :country_code, :cc2, :admin1_code, :admin2_code, 
@@ -120,8 +122,8 @@ Nearest neighbor search uses the euclidian metric in the space of lat/lon coordi
 julia> gc = Geocoder();
 julia> ReverseGeocode.decode(gc, [SA[49.5863897, 17.2627342], SA[63.3342550, 12.0280064]])
 2-element Array{Tuple{String,String},1}:
- ("Czechia", "Olomouc")
- ("Norway", "Meråker")
+ ("Czechia", "CZ", "Olomouc")
+ ("Norway", "NO", "Meråker")
 ```
 """
 function decode(gc::Geocoder, points::Union{AbstractArray{<:AbstractArray{<:Real, 1}}, AbstractArray{<:Real,2}})=>

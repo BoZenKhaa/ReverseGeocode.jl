@@ -6,7 +6,7 @@
 [![Coverage](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl)
 
 
-ReverseGeocode is a tool for quick offline reverse geocoding of coordinates. It is a rewrite  of the python [reverse_geocode](https://github.com/richardpenman/reverse_geocode) module to Julia. 
+ReverseGeocode is a tool for quick offline reverse geocoding of coordinates. It is a Julia rewrite of the python [reverse_geocode](https://github.com/richardpenman/reverse_geocode) module. 
 
 The tool returns city and country closest to a latitude/longitude coordinate (WGS84).
 
@@ -18,13 +18,13 @@ gc = Geocoder()
 
 # single coordinate
 decode(gc, SA[51.45,0.00])
-#("United Kingdom", "Blackheath"))
+#("United Kingdom", "UK", "Blackheath"))
 
 # multiple coordinates
 decode(gc, [[34.2,100.00] [50.01,16.35]])
 #2-element Array{Tuple{String,String},1}:
-# ("China", "Kequ")
-# ("Czechia", "Ústí nad Orlicí"))
+# ("China", "CN", "Kequ")
+# ("Czechia","CZ", "Ústí nad Orlicí"))
 ```
 
 The package works by searching for the nearest neighbor in the list of known locations from [geonames.org](http://download.geonames.org/export/dump). As such, it may not return accurate annotations for some points (e.g. points close to country borders may be mislabelled). 
