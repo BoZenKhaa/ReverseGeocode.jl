@@ -15,3 +15,5 @@ This should be easy since all the data is already there
 
 ## Allow user defined inputs 
 This should be easy as well since all the functions take kwarg with a path to the database file.
+
+## Optionally return distance with the returned values

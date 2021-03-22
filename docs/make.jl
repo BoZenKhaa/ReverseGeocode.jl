@@ -15,6 +15,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Methods and structures" => "docstrings.md",
         "Future plans" => "future_plans.md"
     ],
 )

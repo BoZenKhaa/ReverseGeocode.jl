@@ -6,25 +6,25 @@
 [![Coverage](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/BoZenKhaa/ReverseGeocode.jl)
 
 
-ReverseGeocode is a tool for quick offline reverse geocoding of coordinates in Julia.
+ReverseGeocode is a tool for quick offline reverse geocoding in Julia.
 
-The tool returns city and country closest to a latitude/longitude coordinate (WGS84).
+The tool returns city and country closest to provided latitude/longitude coordinate (WGS84).
 
 ## Installation
 In REPL, simply run 
-```
+```julia
 import Pkg; Pkg.add("ReverseGeocode")
 ```
 to install the package. 
 
-The reference dataset is download upon first usage. To download the data for offline use, run
-```
+The reference dataset is download on the first use. To download the data, simply run
+```julia
 using ReverseGeocode
 Geocoder()
 ```
 
 ## Usage example:
-The `decode` function works with either single lat/lon point or with an array of points or a Matrix.
+The `decode` function works with either single lat/lon point or with an array of points or a Matrix. Lat/lon are assumed to be decimal degrees (WGS84).
 ```julia
 using ReverseGeocode, StaticArrays 
 
@@ -44,14 +44,16 @@ Note that due to the requirements of the NearestNeighbors library, the dimension
 
 ## Description
 
-The package works by searching for the nearest neighbor in the list of known locations from [geonames.org](http://download.geonames.org/export/dump). 
+The package works by searching for the nearest neighbor in the downloaded list of known locations from [geonames.org](http://download.geonames.org/export/dump). 
 
-As such, it is useful for quickly annotating large numbers of points that would otherwise exhaust free web APIs.
+As such, it is extremely fast compared to online APIs. This makes it useful for quickly annotating large numbers of points. Additionally, as the labelling runs locally, it can not exhaust limits of free web APIs.
 
-As such, it may not return accurate annotations for some points (e.g. points close to country borders may be mislabelled). 
+## Limitations
+
+Since the reverse geocoding is performed simply by finding the nearest labelled point, the labelling may not return accurate annotations for some points (e.g. points close to borders of two cities or countries may be mislabelled). 
 
 ## Future plans
-See the page in [docs](https://bozenkhaa.github.io/ReverseGeocode.jl/dev/future_plans/).
+See the [docs](https://bozenkhaa.github.io/ReverseGeocode.jl/dev/).
 
 ## Acknowledgmenets
  - Inspired by the python package [reverse_geocode](https://github.com/richardpenman/reverse_geocode)
