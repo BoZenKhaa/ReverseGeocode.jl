@@ -108,7 +108,7 @@ julia> ReverseGeocode.decode(gc, [SA[49.5863897, 17.2627342], SA[63.3342550, 12.
  (country="Norway", country_code="NO", city="Meråker")
 ```
 """
-function decode(gc::Geocoder, points::Union{AbstractArray{<:AbstractArray{<:Real, 1}}, AbstractArray{<:Real,2}})::Array{NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}}
+function decode(gc::Geocoder, points::Union{AbstractVector{<:AbstractVector{<:Real}}, AbstractMatrix{<:Real}})::Vector{NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}}
     idxs, dist = nn(gc.tree, points)
     infos = [gc.info[idx] for idx in idxs]
     tags = [(country=gc.country_codes[i.country_code], country_code=i.country_code, city=i.city) for i in infos]
@@ -118,8 +118,8 @@ end
 """
     decode(gc::Geocoder, point) => NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}
 
-Decode for single point. If processing many points, use `decode(gc, points)` instead of this method in a loop. 
+Decode for single point. If processing many points, preferably use `decode(gc, points)` instead of using this method in a loop. 
 """
-function decode(gc::Geocoder, point::AbstractArray{<:Real, 1})
-    decode(gc, [point,])[1]
+function decode(gc::Geocoder, point::AbstractVector{<:Real})
+    decode(gc, [point])[1]
 end
