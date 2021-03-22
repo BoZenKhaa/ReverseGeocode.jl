@@ -19,8 +19,9 @@ to install the package.
 
 The reference dataset is download on the first use. To download the data, simply run
 ```julia
-using ReverseGeocode
-Geocoder()
+julia> using ReverseGeocode
+julia> Geocoder();
+[ Info: Reference dataset sucessfuly saved in ./data.
 ```
 
 ## Usage example:

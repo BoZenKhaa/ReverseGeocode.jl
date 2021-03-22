@@ -62,7 +62,6 @@ The dump is unpacked and city name, coordinates and country code are saved
 in a `.csv` file for use in the Geocoder. 
 """
 function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, header=COLUMNS)
-    println(pwd())
     # Download the source file
     download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
     # extract the csv and drop unnecessary columns
@@ -74,7 +73,7 @@ function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, he
     # clean up
     rm(joinpath(data_dir,"$geo_file.zip"))
     
-    @info "Download and preprocessing of reference points was succesful."
+    @info "Reference dataset sucessfuly saved in $data_dir."
 end
 
 """
