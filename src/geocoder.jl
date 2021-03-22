@@ -73,6 +73,8 @@ function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, he
     CSV.write("$data_dir/$geo_file.csv", data; delim="\t")
     # clean up
     rm("$data_dir/$geo_file.zip")
+    
+    @info "Download and preprocessing of reference poitns was succesful."
 end
 
 """

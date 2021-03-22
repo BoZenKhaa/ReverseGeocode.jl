@@ -1,6 +1,0 @@
-# Future plans
-The package intrinsically provides only approximate tags for locations. There seems to be more than one sources of errors:
- - the labelled point is closer to reference point in another country, district, ... than to the correct reference point. 
- - the labelled point is closer to the correct reference point using the real (Haversine) distance, but since the method uses euclidian distance on lat/lon coordinates, it could come out closer to an incorrect reference point. 
-
-The first point is difficult to fix without using polygons for districts and countries. The second point could be easily fixed by using a haversine formula (probably an overkill) or simply compensating for the different lat/lon degree length (WE degrees have different length at different lattitudes) with simple cosine formula. To implement this, I would like to gather a test dataset first to determine whether the more complex calculation is worth the effort. Some reported inaccuracies can be found [here](https://github.com/thampiman/reverse-geocoder/issues).

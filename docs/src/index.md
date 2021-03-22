@@ -2,13 +2,15 @@
 CurrentModule = ReverseGeocode
 ```
 
-# ReverseGeocode
+## ReverseGeocode
 
-```@index
-```
-
+# Table of contents
 ```@contents
 Depth=2
+```
+
+# Methods and structures
+```@index
 ```
 
 ```@autodocs
