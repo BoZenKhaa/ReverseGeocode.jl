@@ -12,7 +12,7 @@ const COLUMNS = [:geonameid, :name, :asciiname, :alternatenames, :latitude, :lon
 """
     Geocoder(;data_dir="./data", geo_file="cities1000"))
 
-Geocoder structure that holds the reference points and their labels.
+Geocoder structure that holds the reference points and their labels (city name and country code).
 """
 struct Geocoder
     tree::NNTree
@@ -36,8 +36,8 @@ end
 """
     read_data(;data_dir="./data", geo_file="cities1000")
 
-Load coordinates, country_codes and city names from the csv export of the geonames file.
-Make sure to call download_data() before read_data().
+Load coordinates, country codes and city names from the `.csv` saved export of the geonames file.
+Make sure to call `download_data()` before `read_data()`.
 """
 function read_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE)
     data = CSV.File("$data_dir/$geo_file.csv"; delim="\t", header=true, types=[String, Float64, Float64, String])
@@ -56,9 +56,10 @@ end
     download_data(;data_dir="./data", geo_file="cities1000", header=COLUMNS)
 
 Download dump from [geonames.org](http://download.geonames.org/export/dump/). This function 
-fetches a file of all cities with a population > 1000 (other options are 500,5000,15000) (or 
-seats of admin div). The dump is unpacked and city name, coordinates and country code are resaved 
-in a csv file for use in the Geocoder. 
+fetches a file of cities with a population > 1000 (and seats of administrations of ceratain country subdivisions, 
+other options are population 500, 5000, 15000, see geonames.org for details). 
+The dump is unpacked and city name, coordinates and country code are saved 
+in a `.csv` file for use in the Geocoder. 
 """
 function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, header=COLUMNS)
     println(pwd())
@@ -75,7 +76,8 @@ function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, he
 end
 
 """
-Download and resave the country codes csv from geonames.
+Download and resave the country codes csv from geonames. 
+Country codes are part of the package so this function does not usually need to run during install. 
 """
 function download_country_codes(;data_dir::String=DATA_DIR)
     download("http://download.geonames.org/export/dump/countryInfo.txt", "$data_dir/countryInfo.txt")
@@ -114,7 +116,7 @@ end
 """
     decode(gc::Geocoder, point) => NamedTuple{(:country, :country_code, :city), Tuple{String, String, String}}
 
-Decode for single point. If processing many points, it should be faster with `decode(gc, points)` than with this function. 
+Decode for single point. If processing many points, use `decode(gc, points)` instead of this method in a loop. 
 """
 function decode(gc::Geocoder, point::AbstractArray{<:Real, 1})
     decode(gc, [point,])[1]
