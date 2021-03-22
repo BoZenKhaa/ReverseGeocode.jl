@@ -20,13 +20,13 @@ struct Geocoder
     country_codes::Dict{String, String}
 
     function Geocoder(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE)
-        if ! isfile("$data_dir/$geo_file.csv")
+        if ! isfile(joinpath(data_dir,"$geo_file.csv"))
             download_data(;data_dir=data_dir, geo_file=geo_file)
         end
         points, info = read_data(;data_dir=data_dir, geo_file=geo_file)
 
         tree = KDTree(points)
-        country_codes = Dict(CSV.File("$data_dir/country_codes.csv"; delim="\t", header=false))
+        country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
 
         new(tree, info, country_codes)
     end
@@ -40,7 +40,7 @@ Load coordinates, country codes and city names from the `.csv` saved export of t
 Make sure to call `download_data()` before `read_data()`.
 """
 function read_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE)
-    data = CSV.File("$data_dir/$geo_file.csv"; delim="\t", header=true, types=[String, Float64, Float64, String])
+    data = CSV.File(joinpath(data_dir,"$geo_file.csv"); delim="\t", header=true, types=[String, Float64, Float64, String])
     
     n = length(data)
     points = Array{Float64}(undef, 2, n)
@@ -64,17 +64,17 @@ in a `.csv` file for use in the Geocoder.
 function download_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, header=COLUMNS)
     println(pwd())
     # Download the source file
-    download("$GEO_SOURCE/$geo_file.zip", "$data_dir/$geo_file.zip")
+    download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
     # extract the csv and drop unnecessary columns
-    r = ZipFile.Reader("$data_dir/$geo_file.zip")
+    r = ZipFile.Reader(joinpath(data_dir,"$geo_file.zip"))
     data = CSV.File(read(r.files[1]); delim="\t", header=header, select=[:name,:latitude,:longitude,:country_code])
     close(r)
     # save needed data as csv
-    CSV.write("$data_dir/$geo_file.csv", data; delim="\t")
+    CSV.write(joinpath(data_dir,"$geo_file.csv"), data; delim="\t")
     # clean up
-    rm("$data_dir/$geo_file.zip")
+    rm(joinpath(data_dir,"$geo_file.zip"))
     
-    @info "Download and preprocessing of reference poitns was succesful."
+    @info "Download and preprocessing of reference points was succesful."
 end
 
 """
@@ -83,9 +83,9 @@ Country codes are part of the package so this function does not usually need to 
 """
 function download_country_codes(;data_dir::String=DATA_DIR)
     download("http://download.geonames.org/export/dump/countryInfo.txt", "$data_dir/countryInfo.txt")
-    country_info = CSV.File("$data_dir/countryInfo.txt"; delim="\t", header=false, select=[1,5], datarow=51)
+    country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], datarow=51)
     country_codes = Dict([(c.Column1, c.Column5) for c in country_info])
-    CSV.write("$data_dir/country_codes.csv", country_codes, delim="\t", header=false)
+    CSV.write(joinpath(data_dir,"country_codes.csv"), country_codes, delim="\t", header=false)
 end
 
 """
