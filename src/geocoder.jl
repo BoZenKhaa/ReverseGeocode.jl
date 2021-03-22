@@ -1,6 +1,6 @@
 const GEO_FILE = "cities1000"
 const GEO_SOURCE = "http://download.geonames.org/export/dump"
-const DATA_DIR = "./data"
+const DATA_DIR = joinpath(dirname(dirname(pathof(ReverseGeocode))),"data")
 
 """
 Column names in the geonames dumpfile (from http://download.geonames.org/export/dump):

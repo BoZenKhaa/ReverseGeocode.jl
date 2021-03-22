@@ -12,7 +12,7 @@ test_locs = [
 ]
 
 @testset "ReverseGeocode.jl" begin
-    gc = Geocoder(;geo_file="test_cities")
+    gc = Geocoder(;data_dir="./data", geo_file="test_cities")
 
     # Test individually
     for loc in test_locs
