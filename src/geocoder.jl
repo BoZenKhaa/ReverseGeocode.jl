@@ -70,7 +70,6 @@ function read_data(;
     geo_file::String=GEO_FILE,
     filters::Vector{Function} = Function[]
 )
-    # data = CSV.File(joinpath(data_dir,"$geo_file.csv"); delim="\t", header=true)
     data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t")
     data = foldl((df, f) -> f(df), filters, init=data)
 
@@ -89,6 +88,7 @@ function read_data(;
         row_info[ismissing.(row_info)] .= ""
         info[i] = NamedTuple{info_headers}(Tuple(row_info))
     end
+
     points, info
 end
 
