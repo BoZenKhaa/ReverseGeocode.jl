@@ -44,7 +44,7 @@ struct Geocoder
     function Geocoder(;
         data_dir::String=DATA_DIR,
         geo_file::String=GEO_FILE,
-        filters::Vector{Function} = Vector{Function}[]
+        filters::Vector{Function} = Function[]
     )
         if ! isfile(joinpath(data_dir,"$geo_file.csv"))
             download_data(;data_dir=data_dir, geo_file=geo_file)
