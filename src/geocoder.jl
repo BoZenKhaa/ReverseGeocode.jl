@@ -41,11 +41,15 @@ struct Geocoder
     info::Array{NamedTuple}
     country_codes::Dict{String, String}
 
-    function Geocoder(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE)
+    function Geocoder(;
+        data_dir::String=DATA_DIR,
+        geo_file::String=GEO_FILE,
+        filters::Vector{Function} = Vector{Function}[]
+    )
         if ! isfile(joinpath(data_dir,"$geo_file.csv"))
             download_data(;data_dir=data_dir, geo_file=geo_file)
         end
-        points, info = read_data(;data_dir=data_dir, geo_file=geo_file)
+        points, info = read_data(;data_dir, geo_file, filters)
 
         tree = KDTree(points)
         country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
@@ -61,17 +65,25 @@ end
 Load coordinates, country codes and city names from the `.csv` saved export of the geonames file.
 Make sure to call `download_data()` before `read_data()`.
 """
-function read_data(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE)
-    data = CSV.File(joinpath(data_dir,"$geo_file.csv"); delim="\t", header=true, #= types=[String, Float64, Float64, String] =#)
-    
-    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], propertynames(data)))
+function read_data(;
+    data_dir::String=DATA_DIR, 
+    geo_file::String=GEO_FILE,
+    filters::Vector{Function} = Function[]
+)
+    # data = CSV.File(joinpath(data_dir,"$geo_file.csv"); delim="\t", header=true)
+    data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t")
+    data = foldl((df, f) -> f(df), filters, init=data)
 
-    n = length(data)
+    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
+
+    n = nrow(data)
     points = Array{Float64}(undef, 2, n)
-    example_info = NamedTuple{info_headers}(Tuple([getproperty(data[1], header) for header in info_headers]))
+    temp = [getproperty(data[1, :], header) for header in info_headers]
+    temp[ismissing.(temp)] .= ""
+    example_info = NamedTuple{info_headers}(Tuple(temp))
 
     info = Array{typeof(example_info)}(undef, n)
-    for (i, row) in enumerate(data)
+    for (i, row) in enumerate(eachrow(data))
         points[:,i] .= row.latitude, row.longitude
         row_info = [getproperty(row, header) for header in info_headers]
         row_info[ismissing.(row_info)] .= ""
@@ -93,7 +105,9 @@ function download_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
     header = COLUMNS,
-    select = [:name,:latitude,:longitude,:country_code]
+    select = [:geonameid, :name, :latitude, :longitude, 
+    :feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
+    :population, :modification_date]
 )
     # Download the source file
     download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
