@@ -25,11 +25,48 @@ const COLUMN_TYPE = Dict(
     :admin3_code => String, 
     :admin4_code => String, 
     :population => Int, 
-    :elevation => Int, 
+    :elevation => Int,
     :dem => Int, 
     :timezone => String, 
     :modification_date => String
 )
+
+function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
+    values = Vector{Any}(undef, length(headers))
+    
+    for (i, header) ∈ enumerate(headers)
+        value = getproperty(row, header)
+        type  = COLUMN_TYPE[header]
+
+        if ismissing(value)
+            value = type == String ? "" : 0
+        elseif type == String
+            value = string(value)
+        end
+
+        values[i] = value
+    end
+
+    values
+end
+
+function _split_latlon_and_info(data::AbstractDataFrame)
+    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
+    
+    n = nrow(data)
+    points = Array{Float64}(undef, 2, n)
+    info   = _extract_column_values(data[1, :], info_headers)
+    example_info = NamedTuple{info_headers}(Tuple(info))
+
+    info = Array{typeof(example_info)}(undef, n)
+    for (i, row) ∈ enumerate(eachrow(data))
+        points[:, i] .= row.latitude, row.longitude
+        row_info = _extract_column_values(row, info_headers)
+        info[i]  = NamedTuple{info_headers}(Tuple(row_info))
+    end
+
+    points, info
+end
                 
 """
     Geocoder(;data_dir="./data", geo_file="cities1000"))
@@ -58,6 +95,15 @@ struct Geocoder
     end
 end
 
+function Geocoder(cities_data::AbstractDataFrame;
+    filters::Vector{Function} = Function[]
+)
+    data = foldl((df, f) -> f(df), filters, init=cities_data)
+    points, info = _split_latlon_and_info(data)
+
+    points, info
+end
+
 
 """
     read_data(;data_dir="./data", geo_file="cities1000")
@@ -71,25 +117,7 @@ function read_data(;
     filters::Vector{Function} = Function[]
 )
     data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t")
-    data = foldl((df, f) -> f(df), filters, init=data)
-
-    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
-
-    n = nrow(data)
-    points = Array{Float64}(undef, 2, n)
-    temp = [getproperty(data[1, :], header) for header in info_headers]
-    temp[ismissing.(temp)] .= ""
-    example_info = NamedTuple{info_headers}(Tuple(temp))
-
-    info = Array{typeof(example_info)}(undef, n)
-    for (i, row) in enumerate(eachrow(data))
-        points[:,i] .= row.latitude, row.longitude
-        row_info = [getproperty(row, header) for header in info_headers]
-        row_info[ismissing.(row_info)] .= ""
-        info[i] = NamedTuple{info_headers}(Tuple(row_info))
-    end
-
-    points, info
+    Geocoder(data; filters)
 end
 
 """
