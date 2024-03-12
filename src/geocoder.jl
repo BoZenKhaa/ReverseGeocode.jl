@@ -28,7 +28,8 @@ const COLUMN_TYPE = Dict(
 )
                 
 """
-    Geocoder(;data_dir="./data", geo_file="cities1000"))
+    Geocoder(cities_data::AbstractDataFrame; filters::Vector{Function} = Function[])
+    Geocoder(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, filters::Vector{Function} = Function[])
 
 Geocoder structure that holds the reference points and their labels (city name and country code).
 """
@@ -36,22 +37,6 @@ struct Geocoder
     tree::NNTree
     info::Array{NamedTuple}
     country_codes::Dict{String, String}
-
-    function Geocoder(;
-        data_dir::String=DATA_DIR,
-        geo_file::String=GEO_FILE,
-        filters::Vector{Function} = Function[]
-    )
-        if ! isfile(joinpath(data_dir,"$geo_file.csv"))
-            download_data(;data_dir=data_dir, geo_file=geo_file)
-        end
-        points, info = read_data(;data_dir, geo_file, filters)
-
-        tree = KDTree(points)
-        country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
-
-        new(tree, info, country_codes)
-    end
 end
 
 function Geocoder(cities_data::AbstractDataFrame;
@@ -61,6 +46,22 @@ function Geocoder(cities_data::AbstractDataFrame;
     points, info = _split_latlon_and_info(data)
 
     points, info
+end
+
+function Geocoder(;
+    data_dir::String=DATA_DIR,
+    geo_file::String=GEO_FILE,
+    filters::Vector{Function} = Function[]
+)
+    if ! isfile(joinpath(data_dir,"$geo_file.csv"))
+        download_data(;data_dir=data_dir, geo_file=geo_file)
+    end
+    points, info = read_data(;data_dir, geo_file, filters)
+
+    tree = KDTree(points)
+    country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
+
+    Geocoder(tree, info, country_codes)
 end
 
 function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
