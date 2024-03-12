@@ -1,13 +1,9 @@
 const GEO_FILE = "cities1000"
 const GEO_SOURCE = "http://download.geonames.org/export/dump"
 const DATA_DIR = joinpath(dirname(dirname(pathof(ReverseGeocode))),"data")
-
-"""
-Column names in the geonames dumpfile (from http://download.geonames.org/export/dump):
-"""
-const COLUMNS = [:geonameid, :name, :asciiname, :alternatenames, :latitude, :longitude, 
-                :feature_class, :feature_code, :country_code, :cc2, :admin1_code, :admin2_code, 
-                :admin3_code, :admin4_code, :population, :elevation, :dem, :timezone, :modification_date]
+const DEFAULT_DOWNLOAD_SELECT = [:geonameid, :name, :latitude, :longitude, 
+:feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
+:population, :modification_date]
 
 const COLUMN_TYPE = Dict(
     :geonameid => Int, 
@@ -30,43 +26,6 @@ const COLUMN_TYPE = Dict(
     :timezone => String, 
     :modification_date => String
 )
-
-function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
-    values = Vector{Any}(undef, length(headers))
-    
-    for (i, header) ∈ enumerate(headers)
-        value = getproperty(row, header)
-        type  = COLUMN_TYPE[header]
-
-        if ismissing(value)
-            value = type == String ? "" : 0
-        elseif type == String
-            value = string(value)
-        end
-
-        values[i] = value
-    end
-
-    values
-end
-
-function _split_latlon_and_info(data::AbstractDataFrame)
-    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
-    
-    n = nrow(data)
-    points = Array{Float64}(undef, 2, n)
-    info   = _extract_column_values(data[1, :], info_headers)
-    example_info = NamedTuple{info_headers}(Tuple(info))
-
-    info = Array{typeof(example_info)}(undef, n)
-    for (i, row) ∈ enumerate(eachrow(data))
-        points[:, i] .= row.latitude, row.longitude
-        row_info = _extract_column_values(row, info_headers)
-        info[i]  = NamedTuple{info_headers}(Tuple(row_info))
-    end
-
-    points, info
-end
                 
 """
     Geocoder(;data_dir="./data", geo_file="cities1000"))
@@ -104,6 +63,42 @@ function Geocoder(cities_data::AbstractDataFrame;
     points, info
 end
 
+function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
+    values = Vector{Any}(undef, length(headers))
+    
+    for (i, header) ∈ enumerate(headers)
+        value = getproperty(row, header)
+        type  = COLUMN_TYPE[header]
+
+        if ismissing(value)
+            value = type == String ? "" : 0
+        elseif type == String
+            value = string(value)
+        end
+
+        values[i] = value
+    end
+
+    values
+end
+
+function _split_latlon_and_info(data::AbstractDataFrame)
+    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
+    
+    n = nrow(data)
+    points = Array{Float64}(undef, 2, n)
+    info   = _extract_column_values(data[1, :], info_headers)
+    example_info = NamedTuple{info_headers}(Tuple(info))
+
+    info = Array{typeof(example_info)}(undef, n)
+    for (i, row) ∈ enumerate(eachrow(data))
+        points[:, i] .= row.latitude, row.longitude
+        row_info = _extract_column_values(row, info_headers)
+        info[i]  = NamedTuple{info_headers}(Tuple(row_info))
+    end
+
+    points, info
+end
 
 """
     read_data(;data_dir="./data", geo_file="cities1000")
@@ -132,10 +127,8 @@ in a `.csv` file for use in the Geocoder.
 function download_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
-    header = COLUMNS,
-    select = [:geonameid, :name, :latitude, :longitude, 
-    :feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
-    :population, :modification_date]
+    header = keys(COLUMNS),
+    select = DEFAULT_DOWNLOAD_SELECT
 )
     # Download the source file
     download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
