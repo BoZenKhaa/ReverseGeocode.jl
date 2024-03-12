@@ -5,7 +5,7 @@ const DEFAULT_DOWNLOAD_SELECT = [:geonameid, :name, :latitude, :longitude,
 :feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
 :population, :modification_date]
 
-const COLUMN_TYPE = Dict(
+const COLUMN_TYPE = OrderedDict(
     :geonameid => Int, 
     :name => String, 
     :asciiname => String, 
@@ -45,7 +45,10 @@ function Geocoder(cities_data::AbstractDataFrame;
     data = foldl((df, f) -> f(df), filters, init=cities_data)
     points, info = _split_latlon_and_info(data)
 
-    points, info
+    tree = KDTree(points)
+    country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
+
+    Geocoder(tree, info, country_codes)
 end
 
 function Geocoder(;
@@ -56,12 +59,9 @@ function Geocoder(;
     if ! isfile(joinpath(data_dir,"$geo_file.csv"))
         download_data(;data_dir=data_dir, geo_file=geo_file)
     end
-    points, info = read_data(;data_dir, geo_file, filters)
+    data = read_data(;data_dir, geo_file)
 
-    tree = KDTree(points)
-    country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
-
-    Geocoder(tree, info, country_codes)
+    Geocoder(data; filters)
 end
 
 function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
@@ -88,8 +88,9 @@ function _split_latlon_and_info(data::AbstractDataFrame)
     
     n = nrow(data)
     points = Array{Float64}(undef, 2, n)
-    info   = _extract_column_values(data[1, :], info_headers)
-    example_info = NamedTuple{info_headers}(Tuple(info))
+    example_info = NamedTuple{info_headers}(
+        Tuple(_extract_column_values(data[1, :], info_headers))
+    )
 
     info = Array{typeof(example_info)}(undef, n)
     for (i, row) ∈ enumerate(eachrow(data))
@@ -110,10 +111,11 @@ Make sure to call `download_data()` before `read_data()`.
 function read_data(;
     data_dir::String=DATA_DIR, 
     geo_file::String=GEO_FILE,
-    filters::Vector{Function} = Function[]
+    # filters::Vector{Function} = Function[]
 )
-    data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t")
-    Geocoder(data; filters)
+    CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t", 
+    types = collect(values(COLUMN_TYPE)))
+    # Geocoder(data; filters)
 end
 
 """
