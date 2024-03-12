@@ -5,4 +5,4 @@
 /data/*
 !country_codes.csv
 
-Manifest.toml
+**Manifest.toml
