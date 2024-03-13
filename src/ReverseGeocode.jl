@@ -4,7 +4,8 @@ using ZipFile,
     CSV,
     NearestNeighbors,
     Logging,
-    DataFrames
+    DataFrames,
+    DataStructures
 
 export Geocoder, decode
 
