@@ -1,13 +1,15 @@
 const GEO_FILE = "cities1000"
 const GEO_SOURCE = "http://download.geonames.org/export/dump"
 const DATA_DIR = joinpath(dirname(dirname(pathof(ReverseGeocode))),"data")
+const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :latitude, :longitude, :country]
 const DEFAULT_DOWNLOAD_SELECT = [:geonameid, :name, :latitude, :longitude, 
 :feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
 :population, :modification_date]
 
 const COLUMN_TYPE = OrderedDict(
     :geonameid => Int, 
-    :name => String, 
+    :name => String,
+    :city => String,
     :asciiname => String, 
     :alternatenames => String, 
     :latitude => Float64, 
@@ -40,28 +42,32 @@ struct Geocoder
 end
 
 function Geocoder(cities_data::AbstractDataFrame;
+    data_dir::String          = DATA_DIR,
     filters::Vector{Function} = Function[]
 )
     data = foldl((df, f) -> f(df), filters, init=cities_data)
+    rename!(data, :name => :city)
+
     points, info = _split_latlon_and_info(data)
 
     tree = KDTree(points)
-    country_codes = Dict(CSV.File(joinpath(data_dir,"country_codes.csv"); delim="\t", header=false))
+    country_codes = Dict(CSV.File(joinpath(data_dir, "country_codes.csv"); delim='\t', header=false))
 
     Geocoder(tree, info, country_codes)
 end
 
 function Geocoder(;
-    data_dir::String=DATA_DIR,
-    geo_file::String=GEO_FILE,
+    data_dir::String          = DATA_DIR,
+    geo_file::String          = GEO_FILE,
+    select::Vector{Symbol}    = DEFAULT_DECODER_OUTPUT,
     filters::Vector{Function} = Function[]
 )
     if ! isfile(joinpath(data_dir,"$geo_file.csv"))
         download_data(;data_dir=data_dir, geo_file=geo_file)
     end
-    data = read_data(;data_dir, geo_file)
+    data = read_data(; data_dir, geo_file, select)
 
-    Geocoder(data; filters)
+    Geocoder(data; data_dir, filters)
 end
 
 function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
@@ -91,7 +97,7 @@ function _split_latlon_and_info(data::AbstractDataFrame)
     example_info = NamedTuple{info_headers}(
         Tuple(_extract_column_values(data[1, :], info_headers))
     )
-
+    
     info = Array{typeof(example_info)}(undef, n)
     for (i, row) ∈ enumerate(eachrow(data))
         points[:, i] .= row.latitude, row.longitude
@@ -109,13 +115,21 @@ Load coordinates, country codes and city names from the `.csv` saved export of t
 Make sure to call `download_data()` before `read_data()`.
 """
 function read_data(;
-    data_dir::String=DATA_DIR, 
-    geo_file::String=GEO_FILE,
-    # filters::Vector{Function} = Function[]
+    data_dir::String       = DATA_DIR, 
+    geo_file::String       = GEO_FILE,
+    select::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
 )
-    CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; delim="\t", 
-    types = collect(values(COLUMN_TYPE)))
-    # Geocoder(data; filters)
+    filter!(x -> x ≠ :country, select)
+
+    data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; 
+        validate = false,
+        delim    = '\t',
+        types    = COLUMN_TYPE,
+        select
+    )
+
+    select!(data, select)
+    data
 end
 
 """
@@ -130,7 +144,7 @@ in a `.csv` file for use in the Geocoder.
 function download_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
-    header = keys(COLUMNS),
+    header = keys(COLUMN_TYPE),
     select = DEFAULT_DOWNLOAD_SELECT
 )
     # Download the source file
