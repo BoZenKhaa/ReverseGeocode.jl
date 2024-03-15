@@ -1,7 +1,7 @@
 const GEO_FILE = "cities1000"
 const GEO_SOURCE = "http://download.geonames.org/export/dump"
 const DATA_DIR = joinpath(dirname(dirname(pathof(ReverseGeocode))),"data")
-const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :latitude, :longitude, :country]
+const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :country]
 const DEFAULT_DOWNLOAD_SELECT = [:geonameid, :name, :latitude, :longitude, 
 :feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
 :population, :modification_date]
@@ -46,9 +46,8 @@ function Geocoder(cities_data::AbstractDataFrame;
     filters::Vector{Function} = Function[]
 )
     data = foldl((df, f) -> f(df), filters, init=cities_data)
-    rename!(data, :name => :city)
     
-    points, info = _split_latlon_and_info(data)
+    points, info = _split_latlon_and_info(rename(data, :name => :city))
     tree = KDTree(points)
     country_codes = Dict{Symbol, Symbol}(
         CSV.File(joinpath(data_dir, "country_codes.csv"); 
@@ -71,9 +70,7 @@ function Geocoder(;
         download_data(;data_dir=data_dir, geo_file=geo_file)
     end
 
-    union!(select, [:latitude, :longitude])
     data = read_data(; data_dir, geo_file, select)
-
     Geocoder(data; data_dir, filters)
 end
 
@@ -111,7 +108,8 @@ function read_data(;
     select::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
 )
     filter!(x -> x ≠ :country, select)
-
+    union!(select, [:latitude, :longitude])
+    
     data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; 
         validate = false,
         delim    = '\t',
