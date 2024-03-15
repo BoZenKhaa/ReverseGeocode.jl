@@ -16,6 +16,8 @@ test_locs = [
 
     # Test individually
     for loc in test_locs
+        geo = ReverseGeocode.decode(gc, loc.latlon)
+
         @test loc.tag == ReverseGeocode.decode(gc, loc.latlon)
     end
     
@@ -25,4 +27,25 @@ test_locs = [
     # Test with Matrix
     test_loc_matrix = Matrix(hcat([l.latlon for l in test_locs]...))
     @test [loc.tag for loc in test_locs] == ReverseGeocode.decode(gc, test_loc_matrix)
+
+    
+    select = [:country_code, :name, :country, :population]
+    df = ReverseGeocode.read_data(;data_dir="./data", geo_file="test_cities", select)
+
+    # Test decoder constructed with user specified :population via `select`
+    gc = Geocoder(; data_dir="./data", geo_file="test_cities", select)
+    for loc in test_locs
+        geo = ReverseGeocode.decode(gc, loc.latlon)
+        idx = findfirst(==(loc.tag.city), df.name)
+        @test geo.population == df.population[idx]
+    end
+    
+    # Test decoder constructed with df 
+    gc = Geocoder(df)
+
+    for loc in test_locs
+        geo = ReverseGeocode.decode(gc, loc.latlon)
+        idx = findfirst(==(loc.tag.city), df.name)
+        @test geo.population == df.population[idx]
+    end
 end
