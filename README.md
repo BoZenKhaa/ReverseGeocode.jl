@@ -21,7 +21,7 @@ The reference dataset is download on the first use. To download the data, simply
 ```julia
 julia> using ReverseGeocode
 julia> Geocoder();
-[ Info: Reference dataset sucessfuly saved in ./data.
+[ Info: Reference dataset sucessfuly saved in ./data.]
 ```
 
 ## Usage example:
@@ -33,7 +33,7 @@ gc = Geocoder()
 
 # single coordinate
 decode(gc, SA[51.45,0.00])
-#(country = "United Kingdom", country_code = "GB", city = "Blackheath")
+#(country = "United Kingdom", country_code = "GB", city = "Lee")
 
 # multiple coordinates
 decode(gc, [[34.2,100.00] [50.01,16.35]])
@@ -42,6 +42,37 @@ decode(gc, [[34.2,100.00] [50.01,16.35]])
 # (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí")
 ```
 Note that due to the requirements of the NearestNeighbors library, the dimension of points needs to be set at type level, so use of either StaticArrays or Matrices for input data is recommended. 
+
+### Decode Output Customization
+
+The user can also explicitly specify what the decode output as well. The cities data contains other additional headers (e.g., `population`, `admin1`, `modification_date`) that can be included into the output.
+
+For example, if the user wants population data from the GeoNames cities table: 
+
+```julia
+gc = Geocoder(; select = [:country, :country_code, :name,  :population])
+
+# single coordinate
+decode(gc, SA[51.45,0.00])
+#(country = "United Kingdom", country_code = "GB", city = "Lee", population = 14573)
+```
+
+For a full list of headers, access `ReverseGeocode.DEFAUL_DOWNLOAD_SELECT`.
+
+More advanced customization can be achieved by passing a `DataFrame` with other user custom headers into the constructor: 
+
+
+```julia
+# Example to add a test column to the data
+df = ReverseGeocode.read_data()
+df.test_col = fill(10, nrow(df))
+
+gc = Geocoder(df)
+
+decode(gc, SA[51.45,0.00])
+# (country = "United Kingdom", country_code = "GB", city = "Lee", test_col = 10)
+```
+
 
 ## Description
 
