@@ -38,7 +38,7 @@ Geocoder structure that holds the reference points and their labels (city name a
 struct Geocoder
     tree::NNTree
     info::Array{NamedTuple}
-    country_codes::Dict{String, String}
+    country_codes::Dict{Symbol, Symbol}
 end
 
 function Geocoder(cities_data::AbstractDataFrame;
@@ -47,11 +47,16 @@ function Geocoder(cities_data::AbstractDataFrame;
 )
     data = foldl((df, f) -> f(df), filters, init=cities_data)
     rename!(data, :name => :city)
-
+    
     points, info = _split_latlon_and_info(data)
-
     tree = KDTree(points)
-    country_codes = Dict(CSV.File(joinpath(data_dir, "country_codes.csv"); delim='\t', header=false))
+    country_codes = Dict{Symbol, Symbol}(
+        CSV.File(joinpath(data_dir, "country_codes.csv"); 
+            delim  = '\t', 
+            header = false,
+            types = [Symbol, Symbol]
+        )
+    )
 
     Geocoder(tree, info, country_codes)
 end
@@ -65,43 +70,29 @@ function Geocoder(;
     if ! isfile(joinpath(data_dir,"$geo_file.csv"))
         download_data(;data_dir=data_dir, geo_file=geo_file)
     end
+
+    union!(select, [:latitude, :longitude])
     data = read_data(; data_dir, geo_file, select)
 
     Geocoder(data; data_dir, filters)
 end
 
-function _extract_column_values(row::DataFrameRow, headers)::Vector{Any}
-    values = Vector{Any}(undef, length(headers))
-    
-    for (i, header) ∈ enumerate(headers)
-        value = getproperty(row, header)
-        type  = COLUMN_TYPE[header]
-
-        if ismissing(value)
-            value = type == String ? "" : 0
-        elseif type == String
-            value = string(value)
-        end
-
-        values[i] = value
-    end
-
-    values
-end
 
 function _split_latlon_and_info(data::AbstractDataFrame)
-    info_headers = Tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data))))
+    info_headers = tuple(filter(x -> x ∉ [:latitude, :longitude], Symbol.(names(data)))...)
     
     n = nrow(data)
     points = Array{Float64}(undef, 2, n)
     example_info = NamedTuple{info_headers}(
-        Tuple(_extract_column_values(data[1, :], info_headers))
+        getproperty.(Ref(data[1, :]), info_headers)
     )
     
     info = Array{typeof(example_info)}(undef, n)
     for (i, row) ∈ enumerate(eachrow(data))
         points[:, i] .= row.latitude, row.longitude
-        row_info = _extract_column_values(row, info_headers)
+        row_info = NamedTuple{info_headers}(
+            getproperty.(Ref(row), info_headers)
+        )
         info[i]  = NamedTuple{info_headers}(Tuple(row_info))
     end
 
@@ -196,7 +187,7 @@ function decode(gc::Geocoder, points::Union{AbstractVector{<:AbstractVector{<:Re
     idxs, dist = nn(gc.tree, points)
     infos = [gc.info[idx] for idx in idxs]
 
-    [(;country=gc.country_codes[x.country_code], x... ) for x in infos]
+    [(;country=string(gc.country_codes[Symbol(x.country_code)]), x... ) for x in infos]
 end
 
 
