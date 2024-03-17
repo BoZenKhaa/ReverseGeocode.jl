@@ -4,3 +4,5 @@
 /docs/build/
 /data/*
 !country_codes.csv
+
+**Manifest.toml

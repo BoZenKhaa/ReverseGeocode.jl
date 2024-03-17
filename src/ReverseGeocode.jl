@@ -1,9 +1,11 @@
 module ReverseGeocode
 
-using ZipFile
-using CSV
-using NearestNeighbors
-using Logging
+using ZipFile,
+    CSV,
+    NearestNeighbors,
+    Logging,
+    DataFrames,
+    DataStructures
 
 export Geocoder, decode
 
