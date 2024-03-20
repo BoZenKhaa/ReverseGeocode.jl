@@ -45,7 +45,7 @@ Note that due to the requirements of the NearestNeighbors library, the dimension
 
 ### Decode Output Customization
 
-The user can also explicitly specify what the decode output as well. The cities data contains other additional headers (e.g., `population`, `admin1`, `modification_date`) that can be included into the output.
+The user can also explicitly specify the decode output as well. The cities data contains other additional headers (e.g., `population`, `admin1`, `modification_date`) that can be included into the output.
 
 For example, if the user wants population data from the GeoNames cities table: 
 
