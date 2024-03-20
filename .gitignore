@@ -1,8 +1,13 @@
-*.jl.*.cov
-*.jl.cov
-*.jl.mem
-/docs/build/
+# Package generated files
 /data/*
 !country_codes.csv
 
+# Julia generated files
+/docs/build/
 **Manifest.toml
+*.jl.mem
+*.jl.*.cov
+*.jl.cov
+
+# Dev tools
+.vscode/
