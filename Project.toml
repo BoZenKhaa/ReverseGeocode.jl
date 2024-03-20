@@ -12,7 +12,8 @@ NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
-ZipFile = "0.10"
 CSV = "0.10"
 DataFrames = "1"
 DataStructures = "0.18"
+NearestNeighbors = "0.4"
+ZipFile = "0.10"
