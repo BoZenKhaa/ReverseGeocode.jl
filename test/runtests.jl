@@ -12,7 +12,10 @@ test_locs = [
 ]
 
 @testset "ReverseGeocode.jl" begin
-    gc = Geocoder(;data_dir="./data", geo_file="test_cities")
+@testset "decode" begin
+    data_dir = "./prepared_data"
+    geo_file = "test_cities"
+    gc = Geocoder(;data_dir=data_dir, geo_file=geo_file)
 
     # Test individually
     for loc in test_locs
@@ -30,10 +33,10 @@ test_locs = [
 
     
     select = [:country_code, :name, :country, :population]
-    df = ReverseGeocode.read_data(;data_dir="./data", geo_file="test_cities", select)
+    df = ReverseGeocode.read_data(;data_dir=data_dir, geo_file=geo_file, decoder_output_columns=select)
 
     # Test decoder constructed with user specified :population via `select`
-    gc = Geocoder(; data_dir="./data", geo_file="test_cities", select)
+    gc = Geocoder(; data_dir=data_dir, geo_file=geo_file, decoder_output_columns=select)
     for loc in test_locs
         geo = ReverseGeocode.decode(gc, loc.latlon)
         idx = findfirst(==(loc.tag.city), df.name)
@@ -48,4 +51,28 @@ test_locs = [
         idx = findfirst(==(loc.tag.city), df.name)
         @test geo.population == df.population[idx]
     end
+end
+@testset "Geocoder setup" begin
+    geo_file = "test_cities1000"
+    data_dir = "./downloaded_data/"
+
+    """
+        Mockup of the download function.
+    """
+    function ReverseGeocode.download_raw_geoname_data(;
+        data_dir::String=DATA_DIR,
+        geo_file::String=GEO_FILE,
+    )
+        mock_data_source = "./downloaded_data/mock_website_download/test_cities1000.zip"
+        cp(mock_data_source, joinpath(data_dir,"$geo_file.zip"))
+    end
+
+    gc = Geocoder(;data_dir=data_dir, geo_file=geo_file, decoder_output_columns = ReverseGeocode.DEFAULT_DECODER_OUTPUT)
+
+    @test !isfile(joinpath(data_dir, "$geo_file.zip"))
+    @test isfile(joinpath(data_dir, "$geo_file.csv"))
+
+    output = decode(gc, [[0.,0.] [50.00,50.00]])
+    @test collect(keys(output[1])) == [:country, :country_code, :city]
+end
 end

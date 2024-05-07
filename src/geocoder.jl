@@ -91,15 +91,25 @@ end
 function Geocoder(;
     data_dir::String          = DATA_DIR,
     geo_file::String          = GEO_FILE,
-    select::Vector{Symbol}    = DEFAULT_DECODER_OUTPUT,
+    decoder_output_columns::Vector{Symbol}    = DEFAULT_DECODER_OUTPUT,
     filters::Vector{Function} = Function[]
 )
-    if ! isfile(joinpath(data_dir,"$geo_file.csv"))
-        download_data(;data_dir=data_dir, geo_file=geo_file)
+
+    # First time setup   
+    if !isfile(joinpath(data_dir,"$geo_file.csv"))
+        @info "$geo_file.csv not found in $data_dir."
+        if !isfile(joinpath(data_dir,"$geo_file.zip"))
+            @info "Downloading $geo_file zip from $GEO_SOURCE/$geo_file.zip."
+            download_raw_geoname_data(;data_dir=data_dir, geo_file=geo_file)
+        end
+        @info "Processing $geo_file.zip."
+        process_and_store_geoname_data(;data_dir=data_dir, geo_file=geo_file)
+        @info "Reference dataset sucessfuly extracted and saved in $(joinpath(data_dir,geo_file)).csv."
     end
 
-    data = read_data(; data_dir, geo_file, select)
-    Geocoder(data; data_dir, filters)
+    # Load reference dataset and create Geocoder
+    dataframe = read_data(; data_dir, geo_file, decoder_output_columns)
+    Geocoder(dataframe; data_dir, filters)
 end
 
 
@@ -125,59 +135,65 @@ function _split_latlon_and_info(data::AbstractDataFrame)
 end
 
 """
-    read_data(;data_dir="./data", geo_file="cities1000")
+    read_data(;data_dir="./data", geo_file="cities1000", select=DEFAULT_DECODER_OUTPUT) => DataFrame
 
 Load coordinates, country codes and city names from the `.csv` saved export of the geonames file.
-Make sure to call `download_data()` before `read_data()`.
+Make sure to download the date before calling `read_data()`.
 """
 function read_data(;
     data_dir::String       = DATA_DIR, 
     geo_file::String       = GEO_FILE,
-    select::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
+    decoder_output_columns::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
 )
-    filter!(x -> x ≠ :country, select)
-    union!(select, [:latitude, :longitude])
+    filter!(x -> x ≠ :country, decoder_output_columns)
+    union!(decoder_output_columns, [:latitude, :longitude])
     
     data = CSV.read(joinpath(data_dir,"$geo_file.csv"), DataFrame; 
         validate = false,
         delim    = '\t',
         types    = COLUMN_TYPE,
-        select
+        select   = decoder_output_columns
     )
 
-    select!(data, select)
+    select!(data, decoder_output_columns)
     data
 end
 
 """
-    download_data(;data_dir="./data", geo_file="cities1000", header=COLUMNS)
+    download_raw_geoname_data(;data_dir="./data", geo_file="cities1000")
 
 Download dump from [geonames.org](http://download.geonames.org/export/dump/). This function 
 fetches a file of cities with a population > 1000 (and seats of administrations of ceratain country subdivisions, 
 other options are population 500, 5000, 15000, see geonames.org for details). 
-The dump is unpacked and city name, coordinates and country code are saved 
-in a `.csv` file for use in the Geocoder. 
 """
-function download_data(;
+function download_raw_geoname_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
+)
+
+    download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
+end
+
+"""
+    process_geoname_data(;data_dir="./data", geo_file="cities1000", header =collect(keys(COLUMN_TYPE)), select=DEFAULT_GEONAME_SELECT)
+
+Process the raw geoname data and save it as a csv. Only selected columns are stored in the csv file. Removes the zip file. 
+"""
+function process_and_store_geoname_data(;
+    data_dir::String=DATA_DIR, 
+    geo_file::String=GEO_FILE, 
     header::Vector{Symbol} = collect(keys(COLUMN_TYPE)),
     select::Vector{Symbol} = DEFAULT_GEONAME_SELECT
 )
-
     @assert Set(select) ⊆ Set(header) "`select` columns must be a subset of dataset `header`."
-    # Download the source file
-    download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
     # extract the csv and drop unnecessary columns
     r = ZipFile.Reader(joinpath(data_dir,"$geo_file.zip"))
     data = CSV.File(read(r.files[1]); delim="\t", header, select)
     close(r)
-    # save needed data as csv
+    # resave needed data as csv
     CSV.write(joinpath(data_dir,"$geo_file.csv"), data; delim="\t")
     # clean up
     rm(joinpath(data_dir,"$geo_file.zip"))
-    
-    @info "Reference dataset sucessfuly saved in $data_dir."
 end
 
 """
@@ -185,7 +201,7 @@ Download and resave the country codes csv from geonames.
 Country codes are part of the package so this function does not usually need to run during install. 
 """
 function download_country_codes(;data_dir::String=DATA_DIR)
-    download("http://download.geonames.org/export/dump/countryInfo.txt", "$data_dir/countryInfo.txt")
+    download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
     country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], datarow=51)
     country_codes = Dict([(c.Column1, c.Column5) for c in country_info])
     CSV.write(joinpath(data_dir,"country_codes.csv"), country_codes, delim="\t", header=false)
