@@ -58,12 +58,13 @@ const DEFAULT_GEONAME_SELECT = [:geonameid, :name, :latitude, :longitude,
 const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :country]
 
 """
-Geocoder(cities_data::AbstractDataFrame; filters::Vector{Function} = Function[])
-Geocoder(;
-    data_dir::String=DATA_DIR, 
-    geo_file::String=GEO_FILE, 
-    decoder_output_columns::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
-    filters::Vector{Function} = Function[])
+    Geocoder(cities_data::AbstractDataFrame; filters::Vector{Function} = Function[])
+    Geocoder(;
+        data_dir::String=DATA_DIR, 
+        geo_file::String=GEO_FILE, 
+        decoder_output_columns::Vector{Symbol} = DEFAULT_DECODER_OUTPUT,
+        filters::Vector{Function} = Function[]
+    )
 
 Geocoder structure that holds the reference points and their labels (city name and country code).
 
