@@ -9,7 +9,7 @@ makedocs(;
     repo="https://github.com/BoZenKhaa/ReverseGeocode.jl/blob/{commit}{path}#{line}",
     sitename="ReverseGeocode.jl",
     format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
+        prettyurls="true",
         canonical="https://BoZenKhaa.github.io/ReverseGeocode.jl",
         assets=String[],
     ),
