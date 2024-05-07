@@ -1,15 +1,37 @@
 const GEO_FILE = "cities1000"
 const GEO_SOURCE = "http://download.geonames.org/export/dump"
 const DATA_DIR = joinpath(dirname(dirname(pathof(ReverseGeocode))),"data")
-const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :country]
-const DEFAULT_DOWNLOAD_SELECT = [:geonameid, :name, :latitude, :longitude, 
-:feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
-:population, :modification_date]
 
+"""
+Geoname description from https://download.geonames.org/export/dump/:
+
+Note that in the cities1000 dataset, the `name` is a city name. 
+
+The main 'geoname' table has the following fields :
+---------------------------------------------------
+geonameid         : integer id of record in geonames database
+name              : name of geographical point (utf8) varchar(200)
+asciiname         : name of geographical point in plain ascii characters, varchar(200)
+alternatenames    : alternatenames, comma separated, ascii names automatically transliterated, convenience attribute from alternatename table, varchar(10000)
+latitude          : latitude in decimal degrees (wgs84)
+longitude         : longitude in decimal degrees (wgs84)
+feature class     : see http://www.geonames.org/export/codes.html, char(1)
+feature code      : see http://www.geonames.org/export/codes.html, varchar(10)
+country code      : ISO-3166 2-letter country code, 2 characters
+cc2               : alternate country codes, comma separated, ISO-3166 2-letter country code, 200 characters
+admin1 code       : fipscode (subject to change to iso code), see exceptions below, see file admin1Codes.txt for display names of this code; varchar(20)
+admin2 code       : code for the second administrative division, a county in the US, see file admin2Codes.txt; varchar(80) 
+admin3 code       : code for third level administrative division, varchar(20)
+admin4 code       : code for fourth level administrative division, varchar(20)
+population        : bigint (8 byte int) 
+elevation         : in meters, integer
+dem               : digital elevation model, srtm3 or gtopo30, average elevation of 3''x3'' (ca 90mx90m) or 30''x30'' (ca 900mx900m) area in meters, integer. srtm processed by cgiar/ciat.
+timezone          : the iana timezone id (see file timeZone.txt) varchar(40)
+modification date : date of last modification in yyyy-MM-dd format
+"""
 const COLUMN_TYPE = OrderedDict(
     :geonameid => Int, 
     :name => String,
-    :city => String,
     :asciiname => String, 
     :alternatenames => String, 
     :latitude => Float64, 
@@ -27,11 +49,17 @@ const COLUMN_TYPE = OrderedDict(
     :dem => Int, 
     :timezone => String, 
     :modification_date => String
-)
-                
+    )
+
+# Columns to select from the geonames data and store in the reference dataset
+const DEFAULT_GEONAME_SELECT = [:geonameid, :name, :latitude, :longitude, 
+:feature_class, :feature_code, :country_code, :admin1_code, :admin2_code, 
+:population, :modification_date]
+const DEFAULT_DECODER_OUTPUT  = [:country_code, :name, :country]
+
 """
-    Geocoder(cities_data::AbstractDataFrame; filters::Vector{Function} = Function[])
-    Geocoder(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, filters::Vector{Function} = Function[])
+Geocoder(cities_data::AbstractDataFrame; filters::Vector{Function} = Function[])
+Geocoder(;data_dir::String=DATA_DIR, geo_file::String=GEO_FILE, filters::Vector{Function} = Function[])
 
 Geocoder structure that holds the reference points and their labels (city name and country code).
 """
@@ -133,9 +161,11 @@ in a `.csv` file for use in the Geocoder.
 function download_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
-    header = keys(COLUMN_TYPE),
-    select = DEFAULT_DOWNLOAD_SELECT
+    header::Vector{Symbol} = collect(keys(COLUMN_TYPE)),
+    select::Vector{Symbol} = DEFAULT_GEONAME_SELECT
 )
+
+    @assert Set(select) ⊆ Set(header) "`select` columns must be a subset of dataset `header`."
     # Download the source file
     download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
     # extract the csv and drop unnecessary columns
