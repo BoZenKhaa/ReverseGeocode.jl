@@ -73,7 +73,7 @@ decode(gc, SA[51.45,0.00])
 # (country = "United Kingdom", country_code = "GB", city = "Lee", test_col = 10)
 ```
 
-Example 2 : add continent into the constructor:
+Example 2 : add continent codes into the constructor:
 
 ```julia
 
@@ -92,9 +92,9 @@ df.continent = getindex.(Ref(continent_codes), country_ISO)
 gc = Geocoder(df)
 
 decode(gc, [[34.2,100.00] [50.01,16.35]])
-2-element Vector{NamedTuple}:
- (country = "China", country_code = "CN", city = "Kequ", continent = "AS")
- (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí", continent = "EU")
+# 2-element Vector{NamedTuple}:
+# (country = "China", country_code = "CN", city = "Kequ", continent = "AS")
+# (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí", continent = "EU")
 ```
 
 
