@@ -87,14 +87,14 @@ continent_codes = Dict{String, String}(
 
 df = ReverseGeocode.read_data()
 country_ISO = Array(df.country_code)
-df.continent = getindex.(Ref(continent_codes), country_ISO)
+df.continent_code = getindex.(Ref(continent_codes), country_ISO)
 
 gc = Geocoder(df)
 
 decode(gc, [[34.2,100.00] [50.01,16.35]])
 # 2-element Vector{NamedTuple}:
-# (country = "China", country_code = "CN", city = "Kequ", continent = "AS")
-# (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí", continent = "EU")
+# (country = "China", country_code = "CN", city = "Kequ", continent_code = "AS")
+# (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí", continent_code = "EU")
 ```
 
 
