@@ -61,7 +61,7 @@ For a full list of headers, access `ReverseGeocode.DEFAUL_DOWNLOAD_SELECT`.
 
 More advanced customization can be achieved by passing a `DataFrame` with other user custom headers into the constructor: 
 
-
+Example 1
 ```julia
 # Example to add a test column to the data
 df = ReverseGeocode.read_data()
@@ -71,6 +71,30 @@ gc = Geocoder(df)
 
 decode(gc, SA[51.45,0.00])
 # (country = "United Kingdom", country_code = "GB", city = "Lee", test_col = 10)
+```
+
+Example 2 : add continent codes into the constructor:
+
+```julia
+
+continent_codes = Dict{String, String}(
+    CSV.File(
+        joinpath(dirname(dirname(pathof(ReverseGeocode))),"data", "continent_codes.csv"); 
+        delim  = '\t', header = false,
+        types = [String, String]
+    )
+)
+
+df = ReverseGeocode.read_data()
+country_ISO = Array(df.country_code)
+df.continent = getindex.(Ref(continent_codes), country_ISO)
+
+gc = Geocoder(df)
+
+decode(gc, [[34.2,100.00] [50.01,16.35]])
+# 2-element Vector{NamedTuple}:
+# (country = "China", country_code = "CN", city = "Kequ", continent = "AS")
+# (country = "Czechia", country_code = "CZ", city = "Ústí nad Orlicí", continent = "EU")
 ```
 
 
