@@ -228,7 +228,7 @@ end
 Save the country codes csv from geonames. 
 Country codes are part of the package so this function does not usually need to run during install. 
 """
-function download_country_codes(;data_dir::String=DATA_DIR)
+function save_country_codes(;data_dir::String=DATA_DIR)
     country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], skipto=51)
     country_codes = Dict([(c.Column1, c.Column5) for c in country_info])
     CSV.write(joinpath(data_dir,"country_codes.csv"), country_codes, delim="\t", header=false)
