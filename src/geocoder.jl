@@ -102,7 +102,19 @@ function Geocoder(;
     filters::Vector{Function} = Function[]
 )
 
-    # First time setup   
+    # First time setup : country_codes.csv and continent_codes.csv
+    if !isfile(joinpath(data_dir,"countryInfo.txt"))
+        @info "Downloading 'countryInfo.txt' from $GEO_SOURCE/countryInfo.txt."
+        download_raw_country_info(;data_dir=DATA_DIR)
+        if !isfile(joinpath(data_dir,"country_codes.csv"))
+            save_country_codes();
+        end
+        if !isfile(joinpath(data_dir,"continent_codes.csv"))
+            save_continent_codes();
+        end
+    end
+    
+    # First time setup : $geo_file.csv  
     if !isfile(joinpath(data_dir,"$geo_file.csv"))
         @info "$geo_file.csv not found in $data_dir."
         if !isfile(joinpath(data_dir,"$geo_file.zip"))
@@ -204,14 +216,32 @@ function process_and_store_geoname_data(;
 end
 
 """
-Download and resave the country codes csv from geonames. 
+Download countryInfo.txt from geonames.
+This file includes country names, country codes, continents, etc. 
+see geonames.org for details.
+"""
+function download_raw_country_info(;data_dir::String=DATA_DIR)
+    download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
+end
+
+"""
+Save the country codes csv from geonames. 
 Country codes are part of the package so this function does not usually need to run during install. 
 """
-function download_country_codes(;data_dir::String=DATA_DIR)
-    download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
-    country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], datarow=51)
+function save_country_codes(;data_dir::String=DATA_DIR)
+    country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], skipto=51)
     country_codes = Dict([(c.Column1, c.Column5) for c in country_info])
     CSV.write(joinpath(data_dir,"country_codes.csv"), country_codes, delim="\t", header=false)
+end
+
+"""
+Save the continent codes csv from countryInfo.txt. 
+Continent codes are part of the package so this function does not usually need to run during install. 
+"""
+function save_continent_codes(;data_dir::String=DATA_DIR)
+    country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,9], skipto=51)
+    continent_codes = Dict([(c.Column1, c.Column9) for c in country_info])
+    CSV.write(joinpath(data_dir,"continent_codes.csv"), continent_codes, delim="\t", header=false)
 end
 
 """
