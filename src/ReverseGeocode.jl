@@ -5,7 +5,8 @@ using ZipFile,
     NearestNeighbors,
     Logging,
     DataFrames,
-    DataStructures
+    DataStructures,
+    Downloads
 
 export Geocoder, decode
 
