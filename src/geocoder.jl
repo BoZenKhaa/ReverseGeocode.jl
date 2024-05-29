@@ -189,7 +189,6 @@ function download_raw_geoname_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
 )
-    # download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
     Downloads.download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
 end
 
@@ -221,7 +220,6 @@ This file includes country names, country codes, continents, etc.
 see geonames.org for details.
 """
 function download_raw_country_info(;data_dir::String=DATA_DIR)
-    # download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
     Downloads.download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
 end
 
