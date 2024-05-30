@@ -1,7 +1,7 @@
 name = "ReverseGeocode"
 uuid = "96b87e3f-b46e-456c-8178-0e438baab6fa"
 authors = ["Jan Mrkos <mrkosjan@gmail.com>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
