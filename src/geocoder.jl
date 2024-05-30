@@ -177,8 +177,7 @@ function download_raw_geoname_data(;
     data_dir::String=DATA_DIR,
     geo_file::String=GEO_FILE,
 )
-
-    download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
+    Downloads.download("$GEO_SOURCE/$geo_file.zip", joinpath(data_dir,"$geo_file.zip"))
 end
 
 """
@@ -208,7 +207,7 @@ Download and resave the country codes csv from geonames.
 Country codes are part of the package so this function does not usually need to run during install. 
 """
 function download_country_codes(;data_dir::String=DATA_DIR)
-    download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
+    Downloads.download("http://download.geonames.org/export/dump/countryInfo.txt", joinpath(data_dir, "countryInfo.txt"))
     country_info = CSV.File(joinpath(data_dir,"countryInfo.txt"); delim="\t", header=false, select=[1,5], datarow=51)
     country_codes = Dict([(c.Column1, c.Column5) for c in country_info])
     CSV.write(joinpath(data_dir,"country_codes.csv"), country_codes, delim="\t", header=false)
